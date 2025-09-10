@@ -1,18 +1,30 @@
-from fastapi import FastAPI
-import generate_video
+from flask import Flask, request, jsonify
+import subprocess
+import os
 
-app = FastAPI()
+app = Flask(__name__)
 
-@app.get("/")
-def root():
-    return {"status": "running", "message": "Meditation Video Generator API"}
+@app.route("/")
+def home():
+    return "Meditation Video Generator API (Flask)"
 
-@app.get("/generate")
-def generate(minutes: int = 1):
-    filename, freq, style = generate_video.generate_video(minutes)
-    return {
+@app.route("/generate", methods=["GET"])
+def generate_video():
+    frequency = request.args.get("frequency", default=528, type=int)
+    minutes = request.args.get("minutes", default=1, type=int)
+
+    # Run video generator script
+    subprocess.run(["python", "generate_video.py", str(frequency), str(minutes)])
+
+    filename = f"output_{frequency}Hz.mp4"
+    return jsonify({
         "status": "success",
         "file": filename,
-        "frequency": freq,
-        "style": style
-    }
+        "frequency": frequency,
+        "minutes": minutes
+    })
+
+# Required for some hosting platforms
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
