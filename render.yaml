@@ -1,3 +1,4 @@
+services:
   - type: web
     name: video-generation-service
     env: python
